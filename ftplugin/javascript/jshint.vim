@@ -74,7 +74,8 @@ let s:plugin_path = s:install_dir . "/jshint/"
 if has('win32')
   let s:plugin_path = substitute(s:plugin_path, '/', '\', 'g')
 endif
-let s:cmd = "cd " . s:plugin_path . " && ./runner.js"
+
+let s:cmd = "node ". s:plugin_path . "runner.js"
 
 " FindRc() will try to find a .jshintrc up the current path string
 " If it cannot find one it will try looking in the home directory
@@ -82,11 +83,11 @@ let s:cmd = "cd " . s:plugin_path . " && ./runner.js"
 " the defaults.
 if !exists("*s:FindRc")
   function s:FindRc(path)
-    let l:filename = '/.jshintrc'
-    let l:jshintrc_file = fnamemodify('.jshintrc', ':p')
+    let l:filename = '\.jshintrc'
+    let l:jshintrc_file = a:path . l:filename
     if filereadable(l:jshintrc_file)
       let s:jshintrc_file = l:jshintrc_file
-    elseif len(a:path) > 1
+    elseif len(a:path) > 3
       call s:FindRc(fnamemodify(a:path, ":h"))
     else
       let l:jshintrc_file = expand('~') . l:filename
@@ -164,19 +165,15 @@ function! s:JSHint()
   let b:qf_list = []
   let b:qf_window_count = -1
 
-  let lines = join(getline(b:firstline, b:lastline), "\n")
+  let lines = getline(b:firstline, b:lastline)
   if len(lines) == 0
     return
   endif
 
-  let b:jshint_output = system(s:cmd . " " . s:jshintrc_file, lines . "\n")
-  if v:shell_error
-    echoerr 'could not invoke JSHint: '
-    echom b:jshint_output
-    let b:jshint_disabled = 1
-  end
+  let fullcmd = s:cmd . " " . s:jshintrc_file
+  let b:jshint_output = xolox#misc#os#exec({ 'command': fullcmd, 'async': 0, 'stdin': lines })['stdout']
 
-  for error in split(b:jshint_output, "\n")
+  for error in b:jshint_output
     " Match {line}:{char}:{message}
     let b:parts = matchlist(error, '\v(\d+):(\d+):(.*)')
     if !empty(b:parts)
