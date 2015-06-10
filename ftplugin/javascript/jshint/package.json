@@ -4,7 +4,8 @@
   "description": "jshint for vim",
   "repository": "https://github.com/wookiehangover/jshint.vim.git",
   "dependencies": {
-    "jshint": "^2.5.0",
+    "get-stdin": "^4.0.1",
+    "jshint": "^2.8.0",
     "jstransform": "^5.0.0",
     "react-tools": "^0.11.0"
   },
